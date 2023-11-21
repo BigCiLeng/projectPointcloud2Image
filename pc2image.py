@@ -2,7 +2,7 @@
 Author: BigCiLeng && bigcileng@outlook.com
 Date: 2023-11-21 14:30:49
 LastEditors: BigCiLeng && bigcileng@outlook.com
-LastEditTime: 2023-11-21 20:42:33
+LastEditTime: 2023-11-21 22:54:01
 FilePath: /pointcloud_projection/pc2image.py
 Description: 
 
@@ -11,7 +11,7 @@ Copyright (c) 2023 by bigcileng@outlook.com, All Rights Reserved.
 # 导入必要的库
 import numpy as np
 import cv2
-from utils.camera_utils import camera_revolution, camera_rotation
+from utils.camera_utils import camera_revolution, camera_rotation, camera_translation
 from utils.pc_utils import project_point_cloud, reg_pc, read_pc
 
 
@@ -33,12 +33,13 @@ def create_spheric_pose(n_poses = 120, axis=2):
     spheric_poses = np.stack(spheric_poses, 0)
     return spheric_poses
 def manual_pose():
-    view = np.array([[1,0,0,10],
+    view = np.array([[1,0,0,0],
                      [0,1,0,0],
                      [0,0,1,0],
                      [0,0,0,1]
                      ])
     ## z轴对准原点
+    view = camera_translation(10, 0)
     view = camera_rotation(view, np.pi / 2, 1)
     view = camera_rotation(view, -np.pi / 2, 2)
     return view
@@ -56,8 +57,13 @@ return {*}
 def pc2image(K, views, image_shape, point_cloud):
     for idx, view in enumerate(views):
         image, depth = project_point_cloud(K, view, image_shape, point_cloud)
-        cv2.imwrite("output/image/image_" + str(idx) + ".jpg", image)
+        W2C = np.linalg.inv(view)
 
+        result = (image, depth, W2C, K)
+
+
+        # vualization
+        cv2.imwrite("output/image/image_" + str(idx) + ".jpg", image)
         mi = np.min(depth) # get minimum depth
         ma = np.max(depth)
         depth = (depth-mi)/(ma-mi+1e-8) # normalize to 0~1
@@ -66,17 +72,17 @@ def pc2image(K, views, image_shape, point_cloud):
         depth = cv2.applyColorMap(depth, cmap)
         cv2.imwrite("output/depth/depth_" + str(idx) + ".jpg", depth)
 
-    return image
+    return result
 
 if __name__ == "__main__":
     filename = 'point_cloud/2.ply'
-    # pc = read_pc(filename)
-    pc = np.load('pc.npy')
+    pc = read_pc(filename)
     pc, R = reg_pc(pc)
-
+    H, W = 480, 640
     # 相机内参
-    K = np.array([[500, 0, 320], [0, 500, 240], [0, 0, 1]], dtype=np.float32)
+    K = np.array([[500, 0, W / 2], [0, 500, H / 2], [0, 0, 1]], dtype=np.float32)
     
     views = create_spheric_pose(120)
-    image_shape = (480, 640)
+    image_shape = (H, W)
+
     pc2image(K, views, image_shape, pc)
