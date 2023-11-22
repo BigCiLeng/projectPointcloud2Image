@@ -2,7 +2,7 @@
 Author: BigCiLeng && bigcileng@outlook.com
 Date: 2023-11-21 14:30:49
 LastEditors: BigCiLeng && bigcileng@outlook.com
-LastEditTime: 2023-11-21 22:54:01
+LastEditTime: 2023-11-22 19:50:58
 FilePath: /pointcloud_projection/pc2image.py
 Description: 
 
@@ -39,7 +39,7 @@ def manual_pose():
                      [0,0,0,1]
                      ])
     ## z轴对准原点
-    view = camera_translation(10, 0)
+    view = camera_translation(view, 10, 0)
     view = camera_rotation(view, np.pi / 2, 1)
     view = camera_rotation(view, -np.pi / 2, 2)
     return view

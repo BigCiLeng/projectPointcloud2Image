@@ -2,7 +2,7 @@
 Author: BigCiLeng && bigcileng@outlook.com
 Date: 2023-11-21 20:16:43
 LastEditors: BigCiLeng && bigcileng@outlook.com
-LastEditTime: 2023-11-21 20:17:06
+LastEditTime: 2023-11-22 19:48:29
 FilePath: /pointcloud_projection/utils/pc_utils.py
 Description: 
 
@@ -31,6 +31,7 @@ def reg_pc(pc):
     
     R = np.sqrt(np.max(np.sum(pc[:, :3]**2, axis=1)))
     return pc, R
+
 def project_point_cloud(K, view, image_shape, pc):
     W2C = np.linalg.inv(view)
     H, W = image_shape
@@ -56,10 +57,15 @@ def project_point_cloud(K, view, image_shape, pc):
         position = position / position[2]
         
         # 判断像素坐标是否在图像范围内，如果是，就将图像上对应的像素设置为点的颜色
-        if 0 <= position[0] < 640 and 0 <= position[1] < 480:
-            if d > 0 and (d < depth[int(position[1]), int(position[0])] or depth[int(position[1]), int(position[0])] == 0):
-                image[int(position[1]), int(position[0])] = color
-                depth[int(position[1]), int(position[0])] = d
+        # shifts = np.array([[-1,-1],[-1,0],[-1,1],[0,-1],[0,0],[0,1],[1,-1],[1,0],[1,1]])
+        # shifts = np.array([[0,0]])
+        p_pos = np.array([int(position[1]), int(position[0])])
+        # for shift in shifts:
+        h, w = p_pos
+        if 0 <= w < W and 0 <= h < H:
+            if d > 0 and (d < depth[h, w] or depth[h, w] == 0):
+                image[h, w] = color
+                depth[h, w] = d
                 cnt += 1
     print(cnt)
     return image, depth
